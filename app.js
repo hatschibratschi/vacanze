@@ -44,7 +44,7 @@ async function init() {
 // ---------- Data loading ----------
 
 async function listDiaryFiles() {
-  const res = await fetch(LIST_URL);
+  const res = await fetch(LIST_URL, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Could not list diary files (jsdelivr returned ${res.status}).`);
   const data = await res.json();
   const prefix = `/${DIARY_PATH}/`;
@@ -54,7 +54,7 @@ async function listDiaryFiles() {
 }
 
 async function loadEntry(file) {
-  const res = await fetch(file.download_url);
+  const res = await fetch(file.download_url, { cache: "no-cache" });
   if (!res.ok) return null;
   const raw = await res.text();
   const { data, body } = parseFrontMatter(raw);
