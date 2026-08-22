@@ -32,7 +32,7 @@ Note: the diary listing is fetched live from the GitHub API (`api.github.com/rep
 
 Add a markdown file to `diary/` named `YYYYMMDD.md`, with front matter like:
 
-```
+``` md
 ---
 tags:
   - Italy
@@ -46,3 +46,12 @@ Text and ![alt text](image-url) go here.
 ```
 
 Files sharing the same `vacationName` are grouped into one trip; `tags` become the filter chips for that trip.
+
+# Issues
+
+## Load content
+
+1. invalidate the CDN immediately with curl calls.
+
+2. Swap the listing call to GitHub's REST API (api.github.com/.../contents/diary) instead of jsdelivr's, since that's what your readme.md actually describes and it has near-zero propagation delay — at the cost of the 60 req/hour/IP rate limit the code comment mentions avoiding. For a low-traffic personal diary site that limit is usually a non-issue.
+
