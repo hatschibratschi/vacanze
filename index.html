@@ -1,4 +1,64 @@
-<html>
-test
-</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vacanze — Travel Diary</title>
+<meta name="description" content="A photo diary of our trips." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%B3%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
+<div class="app">
+
+  <header class="topbar">
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="#" data-home>
+      <span class="brand-mark">🧳</span>
+      <span class="brand-text">Vacanze</span>
+    </a>
+    <div class="topbar-spacer"></div>
+  </header>
+
+  <div class="layout">
+
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-section-label">Trips</div>
+      <ul class="trip-list" id="tripList">
+        <li class="skeleton-item"></li>
+        <li class="skeleton-item"></li>
+        <li class="skeleton-item"></li>
+      </ul>
+    </nav>
+
+    <div class="scrim" id="scrim"></div>
+
+    <main class="content" id="content">
+      <div class="state-message" id="stateMessage">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Loading your diary…</p>
+      </div>
+    </main>
+
+  </div>
+
+  <footer class="site-footer">
+    <p>Made with wanderlust · <a href="https://github.com/hatschibratschi/vacanze" target="_blank" rel="noopener">source</a></p>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <img id="lightboxImg" alt="" />
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
