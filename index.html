@@ -29,19 +29,29 @@
       <span class="brand-mark">🧳</span>
       <span class="brand-text">Vacanze</span>
     </a>
-    <div class="topbar-spacer"></div>
-    <button class="theme-toggle" id="themeToggle" aria-label="Switch to light theme" title="Switch theme"></button>
   </header>
 
   <div class="layout">
 
     <nav class="sidebar" id="sidebar">
-      <div class="sidebar-section-label">Trips</div>
-      <ul class="trip-list" id="tripList">
-        <li class="skeleton-item"></li>
-        <li class="skeleton-item"></li>
-        <li class="skeleton-item"></li>
-      </ul>
+      <div class="sidebar-scroll">
+        <div class="sidebar-section-label">Trips</div>
+        <ul class="trip-list" id="tripList">
+          <li class="skeleton-item"></li>
+          <li class="skeleton-item"></li>
+          <li class="skeleton-item"></li>
+        </ul>
+
+        <div class="sidebar-section-label">Tags</div>
+        <ul class="trip-list" id="tagNavList"></ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle" aria-label="Switch to light theme" title="Switch theme">
+          <span class="theme-toggle-icon" id="themeToggleIcon"></span>
+          <span class="theme-toggle-label" id="themeToggleLabel"></span>
+        </button>
+      </div>
     </nav>
 
     <div class="scrim" id="scrim"></div>

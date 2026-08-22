@@ -11,10 +11,13 @@ const LIST_URL = `https://api.github.com/repos/${REPO}/contents/${DIARY_PATH}?re
 const el = {
   content: document.getElementById("content"),
   tripList: document.getElementById("tripList"),
+  tagNavList: document.getElementById("tagNavList"),
   sidebar: document.getElementById("sidebar"),
   scrim: document.getElementById("scrim"),
   navToggle: document.getElementById("navToggle"),
   themeToggle: document.getElementById("themeToggle"),
+  themeToggleIcon: document.getElementById("themeToggleIcon"),
+  themeToggleLabel: document.getElementById("themeToggleLabel"),
   lightbox: document.getElementById("lightbox"),
   lightboxImg: document.getElementById("lightboxImg"),
   lightboxClose: document.getElementById("lightboxClose"),
@@ -154,6 +157,30 @@ function renderSidebar() {
     li.appendChild(btn);
     el.tripList.appendChild(li);
   }
+  renderTagNav();
+}
+
+function allTags() {
+  const tags = new Set();
+  for (const trip of trips) trip.tags.forEach((t) => tags.add(t));
+  return Array.from(tags).sort((a, b) => a.localeCompare(b));
+}
+
+function renderTagNav() {
+  el.tagNavList.innerHTML = "";
+  for (const tag of allTags()) {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.className = "trip-link tag-nav-link";
+    btn.dataset.tag = tag;
+    btn.innerHTML = `<span><span class="trip-icon">🏷️</span>${escapeHtml(tag)}</span>`;
+    btn.addEventListener("click", () => {
+      location.hash = `#/tag/${encodeURIComponent(tag)}`;
+      closeMobileNav();
+    });
+    li.appendChild(btn);
+    el.tagNavList.appendChild(li);
+  }
 }
 
 function markActiveTrip(slug) {
@@ -162,17 +189,30 @@ function markActiveTrip(slug) {
   });
 }
 
+function markActiveTag(tag) {
+  el.tagNavList.querySelectorAll(".tag-nav-link").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tag === tag);
+  });
+}
+
 // ---------- Routing ----------
 
 function handleRoute() {
   const hash = location.hash;
-  const m = hash.match(/^#\/trip\/([^/]+)/);
-  if (m) {
-    activeTripSlug = m[1];
+  const tripMatch = hash.match(/^#\/trip\/([^/]+)/);
+  const tagMatch = hash.match(/^#\/tag\/([^/]+)/);
+  if (tripMatch) {
+    activeTripSlug = tripMatch[1];
     activeTags = new Set();
+    markActiveTag(null);
     renderTrip(activeTripSlug);
+  } else if (tagMatch) {
+    activeTripSlug = null;
+    markActiveTrip(null);
+    renderTagView(decodeURIComponent(tagMatch[1]));
   } else {
     activeTripSlug = null;
+    markActiveTag(null);
     renderHome();
   }
 }
@@ -282,17 +322,56 @@ function renderTrip(slug) {
   wireImages(el.content);
 }
 
-function renderEntry(entry) {
+function renderEntry(entry, trip) {
   const dateLabel = entry.date ? entry.date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "";
   const tagsHtml = entry.tags.length
     ? `<div class="entry-tags">${entry.tags.map((t) => `<span class="entry-tag">${escapeHtml(t)}</span>`).join("")}</div>`
     : "";
+  const tripLabel = trip
+    ? `<a class="entry-trip" href="#/trip/${trip.slug}">${escapeHtml(trip.name)}</a>`
+    : "";
   return `
     <article class="entry">
+      ${tripLabel}
       ${dateLabel ? `<p class="entry-date">${dateLabel}</p>` : ""}
       <div class="entry-body">${stripLeadingH1(entry.html, entry.title)}</div>
       ${tagsHtml}
     </article>`;
+}
+
+// ---------- Rendering: tag view (across all trips) ----------
+
+function renderTagView(tag) {
+  markActiveTag(tag);
+
+  const matches = [];
+  for (const trip of trips) {
+    for (const entry of trip.entries) {
+      if (entry.tags.includes(tag)) matches.push({ entry, trip });
+    }
+  }
+  matches.sort((a, b) => (a.entry.date && b.entry.date ? b.entry.date - a.entry.date : 0));
+
+  if (!allTags().includes(tag)) {
+    el.content.innerHTML = `<div class="state-message error"><p>That tag doesn't exist.</p></div>`;
+    return;
+  }
+
+  const tripCount = new Set(matches.map((m) => m.trip.slug)).size;
+  const entriesHtml = matches.length
+    ? matches.map(({ entry, trip }) => renderEntry(entry, trip)).join("")
+    : `<div class="state-message"><p>No entries have this tag.</p></div>`;
+
+  el.content.innerHTML = `
+    <div class="trip-hero">
+      <p class="eyebrow">Tag</p>
+      <h1>${escapeHtml(tag)}</h1>
+      <p class="trip-meta">${matches.length} ${matches.length === 1 ? "entry" : "entries"} across ${tripCount} ${tripCount === 1 ? "trip" : "trips"}</p>
+    </div>
+    <div class="entries">${entriesHtml}</div>
+  `;
+
+  wireImages(el.content);
 }
 
 function stripLeadingH1(html, title) {
@@ -372,7 +451,8 @@ function initTheme() {
 
 function updateThemeToggle() {
   const isDark = currentTheme() === "dark";
-  el.themeToggle.textContent = isDark ? "☀️" : "🌙";
+  el.themeToggleIcon.textContent = isDark ? "☀️" : "🌙";
+  el.themeToggleLabel.textContent = isDark ? "Light mode" : "Dark mode";
   el.themeToggle.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
 }
 
