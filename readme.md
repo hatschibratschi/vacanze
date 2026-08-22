@@ -41,3 +41,16 @@ Text and ![alt text](image-url) go here.
 Files sharing the same `vacationName` are grouped into one trip; `tags` become the filter chips for that trip.
 
 
+# Sharing photos
+
+## Nextcloud iOS app
+
+- Version 1
+  - Photo. ...-Button. Details. Share. remove modification - save. Copy link.
+  - Open page. Share. Copy link.
+- Version 2
+  - Create public album (once)
+  - In nextcloud app add photo to public album 
+  - Open public album in incognito browser and copy link of photo
+
+

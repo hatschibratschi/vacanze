@@ -14,6 +14,7 @@ const el = {
   sidebar: document.getElementById("sidebar"),
   scrim: document.getElementById("scrim"),
   navToggle: document.getElementById("navToggle"),
+  themeToggle: document.getElementById("themeToggle"),
   lightbox: document.getElementById("lightbox"),
   lightboxImg: document.getElementById("lightboxImg"),
   lightboxClose: document.getElementById("lightboxClose"),
@@ -126,11 +127,11 @@ function groupIntoTrips(entries) {
   }
   const list = Array.from(byName.values());
   for (const trip of list) {
-    trip.entries.sort((a, b) => (a.date && b.date ? a.date - b.date : 0));
+    trip.entries.sort((a, b) => (a.date && b.date ? b.date - a.date : 0));
   }
   list.sort((a, b) => {
-    const aLast = a.entries.at(-1)?.date || 0;
-    const bLast = b.entries.at(-1)?.date || 0;
+    const aLast = a.entries[0]?.date || 0;
+    const bLast = b.entries[0]?.date || 0;
     return bLast - aLast;
   });
   return list;
@@ -232,8 +233,8 @@ function dateRange(trip) {
   const dates = trip.entries.map((e) => e.date).filter(Boolean);
   if (dates.length === 0) return "";
   const fmt = (d) => d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
-  const first = fmt(dates[0]);
-  const last = fmt(dates.at(-1));
+  const first = fmt(new Date(Math.min(...dates)));
+  const last = fmt(new Date(Math.max(...dates)));
   return first === last ? first : `${first} – ${last}`;
 }
 
@@ -328,6 +329,7 @@ function closeLightbox() {
 // ---------- Chrome / misc UI ----------
 
 function bindGlobalUI() {
+  initTheme();
   el.navToggle.addEventListener("click", () => {
     const open = el.sidebar.classList.toggle("open");
     el.scrim.classList.toggle("open", open);
@@ -346,6 +348,32 @@ function bindGlobalUI() {
     location.hash = "";
     closeMobileNav();
   });
+}
+
+// ---------- Theme ----------
+
+function systemTheme() {
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function currentTheme() {
+  return document.documentElement.getAttribute("data-theme") || systemTheme();
+}
+
+function initTheme() {
+  updateThemeToggle();
+  el.themeToggle.addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    updateThemeToggle();
+  });
+}
+
+function updateThemeToggle() {
+  const isDark = currentTheme() === "dark";
+  el.themeToggle.textContent = isDark ? "☀️" : "🌙";
+  el.themeToggle.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
 }
 
 function closeMobileNav() {
