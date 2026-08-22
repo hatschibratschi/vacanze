@@ -1,8 +1,13 @@
 // Vacanze travel diary — reads markdown files from /diary at runtime (no build step).
 
 const REPO = "hatschibratschi/vacanze";
+const BRANCH = "main";
 const DIARY_PATH = "diary";
-const API_URL = `https://api.github.com/repos/${REPO}/contents/${DIARY_PATH}`;
+// jsdelivr's GitHub CDN, not the GitHub REST API: the API caps out at 60
+// unauthenticated requests/hour per IP, which a handful of page reloads
+// blows through. jsdelivr has no such limit and is meant for exactly this.
+const LIST_URL = `https://data.jsdelivr.com/v1/packages/gh/${REPO}@${BRANCH}?structure=flat`;
+const RAW_BASE = `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}`;
 
 const el = {
   content: document.getElementById("content"),
@@ -39,10 +44,13 @@ async function init() {
 // ---------- Data loading ----------
 
 async function listDiaryFiles() {
-  const res = await fetch(API_URL, { headers: { Accept: "application/vnd.github.v3+json" } });
-  if (!res.ok) throw new Error(`Could not list diary files (GitHub API returned ${res.status}).`);
-  const items = await res.json();
-  return items.filter((item) => item.type === "file" && item.name.toLowerCase().endsWith(".md"));
+  const res = await fetch(LIST_URL);
+  if (!res.ok) throw new Error(`Could not list diary files (jsdelivr returned ${res.status}).`);
+  const data = await res.json();
+  const prefix = `/${DIARY_PATH}/`;
+  return data.files
+    .filter((f) => f.name.startsWith(prefix) && f.name.toLowerCase().endsWith(".md"))
+    .map((f) => ({ name: f.name.slice(prefix.length), download_url: `${RAW_BASE}${f.name}` }));
 }
 
 async function loadEntry(file) {
