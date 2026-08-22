@@ -6,14 +6,7 @@
 # Workflow
 
 1. Write .md, push to diary/ on GitHub.
-2. jsdelivr's edge picks it up (normally within about an hour on its own; you can also force it instantly with the purge.jsdelivr.net call you already used).
-
-``` shell
-curl https://purge.jsdelivr.net/gh/hatschibratschi/vacanze@main/diary/20260823.md
-curl https://purge.jsdelivr.net/gh/hatschibratschi/vacanze@main
-```
-
-3. Reload the page — the browser will now actually ask again instead of serving its own year-old cached copy, so the new entry shows up.
+2. Reload the page — entries are fetched live from the GitHub API, so a push usually shows up within a few minutes.
 
 
 # Running locally
@@ -47,11 +40,4 @@ Text and ![alt text](image-url) go here.
 
 Files sharing the same `vacationName` are grouped into one trip; `tags` become the filter chips for that trip.
 
-# Issues
-
-## Load content
-
-1. invalidate the CDN immediately with curl calls.
-
-2. Swap the listing call to GitHub's REST API (api.github.com/.../contents/diary) instead of jsdelivr's, since that's what your readme.md actually describes and it has near-zero propagation delay — at the cost of the 60 req/hour/IP rate limit the code comment mentions avoiding. For a low-traffic personal diary site that limit is usually a non-issue.
 

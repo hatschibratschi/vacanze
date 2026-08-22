@@ -3,11 +3,10 @@
 const REPO = "hatschibratschi/vacanze";
 const BRANCH = "main";
 const DIARY_PATH = "diary";
-// jsdelivr's GitHub CDN, not the GitHub REST API: the API caps out at 60
-// unauthenticated requests/hour per IP, which a handful of page reloads
-// blows through. jsdelivr has no such limit and is meant for exactly this.
-const LIST_URL = `https://data.jsdelivr.com/v1/packages/gh/${REPO}@${BRANCH}?structure=flat`;
-const RAW_BASE = `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}`;
+// GitHub's contents API caps out at 60 unauthenticated requests/hour/IP, but
+// unlike jsdelivr it has no long-lived CDN cache, so new pushes show up
+// within a few minutes instead of potentially hours.
+const LIST_URL = `https://api.github.com/repos/${REPO}/contents/${DIARY_PATH}?ref=${BRANCH}`;
 
 const el = {
   content: document.getElementById("content"),
@@ -45,12 +44,11 @@ async function init() {
 
 async function listDiaryFiles() {
   const res = await fetch(LIST_URL, { cache: "no-cache" });
-  if (!res.ok) throw new Error(`Could not list diary files (jsdelivr returned ${res.status}).`);
+  if (!res.ok) throw new Error(`Could not list diary files (GitHub API returned ${res.status}).`);
   const data = await res.json();
-  const prefix = `/${DIARY_PATH}/`;
-  return data.files
-    .filter((f) => f.name.startsWith(prefix) && f.name.toLowerCase().endsWith(".md"))
-    .map((f) => ({ name: f.name.slice(prefix.length), download_url: `${RAW_BASE}${f.name}` }));
+  return data
+    .filter((f) => f.type === "file" && f.name.toLowerCase().endsWith(".md"))
+    .map((f) => ({ name: f.name, download_url: f.download_url }));
 }
 
 async function loadEntry(file) {
