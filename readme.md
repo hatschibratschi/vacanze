@@ -1,7 +1,7 @@
 # Links
 
 - https://hatschibratschi.github.io/vacanze
-- [shared iCloud album](https://www.icloud.com/sharedalbum/#B2FG4TcsmGKVIyF)
+- [shared album](https://nx56500.your-storageshare.de/apps/photos/public/0E7ymRXb1ErmFWcGemV1apHoCog6ytUq)
 
 # Workflow
 
