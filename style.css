@@ -1,16 +1,18 @@
 /* ---------- Design tokens ---------- */
 :root {
-  --bg: #faf6f1;
+  color-scheme: light;
+  --bg: #f6f6f5;
   --bg-elevated: #ffffff;
-  --ink: #241f1a;
-  --ink-soft: #6b6058;
-  --line: #e7ded3;
-  --accent: #c5622e;
-  --accent-soft: #f3e3d6;
-  --accent-ink: #7a3a17;
-  --sidebar-bg: #fffdfb;
-  --shadow: 0 1px 2px rgba(36, 31, 26, 0.04), 0 8px 24px -8px rgba(36, 31, 26, 0.12);
-  --shadow-lg: 0 4px 12px rgba(36, 31, 26, 0.06), 0 24px 48px -16px rgba(36, 31, 26, 0.22);
+  --ink: #1b1b1b;
+  --ink-soft: #6b6b6b;
+  --line: #e3e3e1;
+  --accent: #2a2a2a;
+  --accent-soft: #ededeb;
+  --accent-ink: #454545;
+  --on-accent: #ffffff;
+  --sidebar-bg: #fbfbfa;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -8px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.06), 0 24px 48px -16px rgba(0, 0, 0, 0.22);
   --radius: 18px;
   --radius-sm: 10px;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
@@ -19,30 +21,34 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16130f;
-    --bg-elevated: #201b16;
-    --ink: #f1e9df;
-    --ink-soft: #a89d90;
-    --line: #33291f;
-    --accent: #e08a4f;
-    --accent-soft: #3a2a1c;
-    --accent-ink: #f3c9a3;
-    --sidebar-bg: #1b1712;
+    color-scheme: dark;
+    --bg: #121211;
+    --bg-elevated: #1c1c1b;
+    --ink: #ececea;
+    --ink-soft: #9b9b97;
+    --line: #2f2f2d;
+    --accent: #e6e6e4;
+    --accent-soft: #2a2a28;
+    --accent-ink: #d0d0cc;
+    --on-accent: #131312;
+    --sidebar-bg: #171716;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.35), 0 24px 48px -16px rgba(0, 0, 0, 0.6);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #16130f;
-  --bg-elevated: #201b16;
-  --ink: #f1e9df;
-  --ink-soft: #a89d90;
-  --line: #33291f;
-  --accent: #e08a4f;
-  --accent-soft: #3a2a1c;
-  --accent-ink: #f3c9a3;
-  --sidebar-bg: #1b1712;
+  color-scheme: dark;
+  --bg: #121211;
+  --bg-elevated: #1c1c1b;
+  --ink: #ececea;
+  --ink-soft: #9b9b97;
+  --line: #2f2f2d;
+  --accent: #e6e6e4;
+  --accent-soft: #2a2a28;
+  --accent-ink: #d0d0cc;
+  --on-accent: #131312;
+  --sidebar-bg: #171716;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.35), 0 24px 48px -16px rgba(0, 0, 0, 0.6);
 }
@@ -56,10 +62,30 @@ body {
   font-family: var(--font-body);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.06);
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* Links carry no hue: they are marked by an underline, not by colour. */
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--line);
+}
+a:hover { text-decoration-color: currentColor; }
+
+/* iOS Safari data detectors (dates, addresses, phone numbers) get auto-linked
+   and painted system blue. Force them back into the monochrome scale. */
+a[x-apple-data-detectors] {
+  color: inherit !important;
+  text-decoration: none !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+}
 
 .app {
   min-height: 100vh;
@@ -89,7 +115,7 @@ a:hover { text-decoration: underline; }
   font-size: 1.35rem;
   color: var(--ink);
 }
-.brand:hover { text-decoration: none; }
+.brand, .brand:hover { text-decoration: none; }
 .brand-mark { font-size: 1.5rem; }
 
 .nav-toggle {
@@ -197,7 +223,7 @@ a:hover { text-decoration: underline; }
   transition: background 0.15s ease;
 }
 .trip-link:hover { background: var(--accent-soft); }
-.trip-link.active { background: var(--accent); color: #fff; }
+.trip-link.active { background: var(--accent); color: var(--on-accent); }
 .trip-link .trip-icon { opacity: 0.8; margin-right: 8px; }
 .trip-link .trip-count {
   font-size: 0.75rem;
@@ -219,7 +245,7 @@ a:hover { text-decoration: underline; }
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 25;
 }
 
@@ -300,7 +326,7 @@ a:hover { text-decoration: underline; }
 .tag-chip.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .tag-chip:disabled {
   opacity: 0.4;
@@ -349,7 +375,8 @@ a:hover { text-decoration: underline; }
   border-radius: 999px;
   margin: 0 0 10px;
 }
-.entry-trip:hover { text-decoration: none; opacity: 0.85; }
+.entry-trip, .entry-trip:hover { text-decoration: none; }
+.entry-trip:hover { opacity: 0.85; }
 
 .entry-date {
   font-size: 0.78rem;
@@ -473,7 +500,7 @@ a:hover { text-decoration: underline; }
 .lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(10, 8, 6, 0.9);
+  background: rgba(0, 0, 0, 0.88);
   display: none;
   align-items: center;
   justify-content: center;
