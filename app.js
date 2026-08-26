@@ -25,7 +25,8 @@ const el = {
 
 let trips = [];              // [{ name, slug, entries: [...], tags: Set }]
 let activeTripSlug = null;
-let activeTags = new Set();
+let tripFilterTags = new Set();  // tag filter inside a single trip view
+let tagViewTags = new Set();     // tags from the #/tag/a,b route (cross-trip view)
 
 init();
 
@@ -175,7 +176,8 @@ function renderTagNav() {
     btn.dataset.tag = tag;
     btn.innerHTML = `<span><span class="trip-icon">🏷️</span>${escapeHtml(tag)}</span>`;
     btn.addEventListener("click", () => {
-      location.hash = `#/tag/${encodeURIComponent(tag)}`;
+      // Clicking toggles the tag, so several can be combined in the tag view.
+      location.hash = tagHash(toggledTags(tagViewTags, tag));
       closeMobileNav();
     });
     li.appendChild(btn);
@@ -189,10 +191,57 @@ function markActiveTrip(slug) {
   });
 }
 
-function markActiveTag(tag) {
+function markActiveTags(tagSet) {
   el.tagNavList.querySelectorAll(".tag-nav-link").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.tag === tag);
+    btn.classList.toggle("active", tagSet.has(btn.dataset.tag));
   });
+}
+
+// ---------- Tag filter helpers ----------
+
+// An entry matches only when it carries *every* selected tag.
+function matchesAllTags(entry, tagSet) {
+  for (const tag of tagSet) if (!entry.tags.includes(tag)) return false;
+  return true;
+}
+
+function toggledTags(tagSet, tag) {
+  const next = new Set(tagSet);
+  if (next.has(tag)) next.delete(tag);
+  else next.add(tag);
+  return next;
+}
+
+function withTag(tagSet, tag) {
+  return new Set(tagSet).add(tag);
+}
+
+function sortedTags(tagSet) {
+  return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+}
+
+function tagHash(tagSet) {
+  const list = sortedTags(tagSet);
+  return list.length ? `#/tag/${list.map(encodeURIComponent).join(",")}` : "";
+}
+
+function parseTagHash(segment) {
+  return segment
+    .split(",")
+    .map((t) => decodeURIComponent(t).trim())
+    .filter(Boolean);
+}
+
+// A chip is disabled when adding it to the current selection would match nothing.
+function tagChipHtml(tag, active, count) {
+  const disabled = !active && count === 0;
+  return `<button class="tag-chip${active ? " active" : ""}" data-tag="${escapeAttr(tag)}"${disabled ? " disabled" : ""}>${escapeHtml(tag)}<span class="tag-chip-count">${count}</span></button>`;
+}
+
+function tagBarHtml(chips, selectedCount) {
+  if (!chips) return "";
+  const note = selectedCount > 1 ? `<p class="tag-bar-note">Showing entries tagged with all ${selectedCount} selected tags.</p>` : "";
+  return `<div class="tag-bar">${chips}</div>${note}`;
 }
 
 // ---------- Routing ----------
@@ -203,16 +252,20 @@ function handleRoute() {
   const tagMatch = hash.match(/^#\/tag\/([^/]+)/);
   if (tripMatch) {
     activeTripSlug = tripMatch[1];
-    activeTags = new Set();
-    markActiveTag(null);
+    tripFilterTags = new Set();
+    tagViewTags = new Set();
+    markActiveTags(tagViewTags);
     renderTrip(activeTripSlug);
   } else if (tagMatch) {
     activeTripSlug = null;
+    tripFilterTags = new Set();
     markActiveTrip(null);
-    renderTagView(decodeURIComponent(tagMatch[1]));
+    renderTagView(parseTagHash(tagMatch[1]));
   } else {
     activeTripSlug = null;
-    markActiveTag(null);
+    tripFilterTags = new Set();
+    tagViewTags = new Set();
+    markActiveTags(tagViewTags);
     renderHome();
   }
 }
@@ -289,15 +342,18 @@ function renderTrip(slug) {
     return;
   }
 
-  const allTags = Array.from(trip.tags).sort((a, b) => a.localeCompare(b));
-  const tagChips = allTags
-    .map((tag) => `<button class="tag-chip${activeTags.has(tag) ? " active" : ""}" data-tag="${escapeAttr(tag)}">${escapeHtml(tag)}</button>`)
+  const tripTags = sortedTags(trip.tags);
+  const tagChips = tripTags
+    .map((tag) => {
+      const count = trip.entries.filter((entry) => matchesAllTags(entry, withTag(tripFilterTags, tag))).length;
+      return tagChipHtml(tag, tripFilterTags.has(tag), count);
+    })
     .join("");
 
-  const visibleEntries = trip.entries.filter((entry) => activeTags.size === 0 || entry.tags.some((t) => activeTags.has(t)));
+  const visibleEntries = trip.entries.filter((entry) => matchesAllTags(entry, tripFilterTags));
 
   const entriesHtml = visibleEntries.length
-    ? visibleEntries.map(renderEntry).join("")
+    ? visibleEntries.map((entry) => renderEntry(entry)).join("")
     : `<div class="state-message"><p>No entries match the selected tags.</p></div>`;
 
   el.content.innerHTML = `
@@ -306,15 +362,13 @@ function renderTrip(slug) {
       <h1>${escapeHtml(trip.name)}</h1>
       <p class="trip-meta">${trip.entries.length} ${trip.entries.length === 1 ? "entry" : "entries"}${dateRange(trip) ? " · " + dateRange(trip) : ""}</p>
     </div>
-    ${allTags.length ? `<div class="tag-bar">${tagChips}</div>` : ""}
+    ${tagBarHtml(tagChips, tripFilterTags.size)}
     <div class="entries">${entriesHtml}</div>
   `;
 
   el.content.querySelectorAll(".tag-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
-      const tag = chip.dataset.tag;
-      if (activeTags.has(tag)) activeTags.delete(tag);
-      else activeTags.add(tag);
+      tripFilterTags = toggledTags(tripFilterTags, chip.dataset.tag);
       renderTrip(slug);
     });
   });
@@ -341,37 +395,60 @@ function renderEntry(entry, trip) {
 
 // ---------- Rendering: tag view (across all trips) ----------
 
-function renderTagView(tag) {
-  markActiveTag(tag);
+function renderTagView(tags) {
+  tagViewTags = new Set(tags);
+  markActiveTags(tagViewTags);
 
-  const matches = [];
-  for (const trip of trips) {
-    for (const entry of trip.entries) {
-      if (entry.tags.includes(tag)) matches.push({ entry, trip });
-    }
-  }
-  matches.sort((a, b) => (a.entry.date && b.entry.date ? b.entry.date - a.entry.date : 0));
-
-  if (!allTags().includes(tag)) {
-    el.content.innerHTML = `<div class="state-message error"><p>That tag doesn't exist.</p></div>`;
+  const known = allTags();
+  const unknown = sortedTags(tagViewTags).filter((t) => !known.includes(t));
+  if (unknown.length) {
+    tagViewTags = new Set();
+    markActiveTags(tagViewTags);
+    el.content.innerHTML = `<div class="state-message error"><p>${unknown.length === 1 ? "That tag doesn't" : "Those tags don't"} exist: ${escapeHtml(unknown.join(", "))}.</p></div>`;
     return;
   }
 
+  const matches = entriesMatching(tagViewTags);
+  const selected = sortedTags(tagViewTags);
   const tripCount = new Set(matches.map((m) => m.trip.slug)).size;
+
+  const tagChips = known
+    .map((tag) => tagChipHtml(tag, tagViewTags.has(tag), entriesMatching(withTag(tagViewTags, tag)).length))
+    .join("");
+
   const entriesHtml = matches.length
     ? matches.map(({ entry, trip }) => renderEntry(entry, trip)).join("")
-    : `<div class="state-message"><p>No entries have this tag.</p></div>`;
+    : `<div class="state-message"><p>No entries carry ${selected.length === 1 ? "this tag" : "all of these tags"}.</p></div>`;
 
   el.content.innerHTML = `
     <div class="trip-hero">
-      <p class="eyebrow">Tag</p>
-      <h1>${escapeHtml(tag)}</h1>
+      <p class="eyebrow">${selected.length === 1 ? "Tag" : "Tags"}</p>
+      <h1>${escapeHtml(selected.join(" + "))}</h1>
       <p class="trip-meta">${matches.length} ${matches.length === 1 ? "entry" : "entries"} across ${tripCount} ${tripCount === 1 ? "trip" : "trips"}</p>
     </div>
+    ${tagBarHtml(tagChips, selected.length)}
     <div class="entries">${entriesHtml}</div>
   `;
 
+  el.content.querySelectorAll(".tag-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      location.hash = tagHash(toggledTags(tagViewTags, chip.dataset.tag));
+    });
+  });
+
   wireImages(el.content);
+}
+
+// All entries across every trip that carry each of `tagSet`, newest first.
+function entriesMatching(tagSet) {
+  const matches = [];
+  for (const trip of trips) {
+    for (const entry of trip.entries) {
+      if (matchesAllTags(entry, tagSet)) matches.push({ entry, trip });
+    }
+  }
+  matches.sort((a, b) => (a.entry.date && b.entry.date ? b.entry.date - a.entry.date : 0));
+  return matches;
 }
 
 function stripLeadingH1(html, title) {

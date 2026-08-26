@@ -296,11 +296,28 @@ a:hover { text-decoration: underline; }
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.tag-chip:hover { border-color: var(--accent); }
+.tag-chip:hover:not(:disabled) { border-color: var(--accent); }
 .tag-chip.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+.tag-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tag-chip-count {
+  margin-left: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+.tag-bar-note {
+  margin: -24px 40px 32px;
+  max-width: 900px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
 }
 
 /* ---------- Entries / timeline ---------- */
@@ -503,5 +520,6 @@ a:hover { text-decoration: underline; }
   .scrim.open { display: block; }
 
   .trip-hero, .tag-bar, .entries, .home-hero, .trip-cards { padding-left: 20px; padding-right: 20px; }
+  .tag-bar-note { margin-left: 20px; margin-right: 20px; }
   .entry { padding: 22px 20px; }
 }
